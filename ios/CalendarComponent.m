@@ -10,9 +10,10 @@
 #import "CalendarComponent.h"
 
 #import "React/RCTBridgeModule.h"
+
 @interface
 RCT_EXTERN_MODULE(CalendarManager, NSObject)
-RCT_EXTERN_METHOD(addEvent:(NSString *)title startDate:(double)startDate endDate:(double)endDate)
+RCT_EXTERN_METHOD(addEvent:(NSString *)title startDate:(double)startDate endDate:(double)endDate resolver:(RCTPromiseResolveBlock)resolver rejecter:(RCTPromiseRejectBlock)rejecter)
 
 @end
 

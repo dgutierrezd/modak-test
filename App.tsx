@@ -7,6 +7,7 @@
 
 import React from 'react';
 import {
+  Alert,
   Button,
   NativeModules,
   SafeAreaView,
@@ -49,7 +50,13 @@ function App(): React.JSX.Element {
             title="Click to invoke your native module!"
             color="#841584"
             onPress={() => {
-              CalendarManager.addEvent('Meeting', new Date().valueOf(), new Date(Date.now() + 3600000).valueOf());
+              CalendarManager.addEvent('Meeting', new Date().valueOf(), new Date(Date.now() + 3600000).valueOf())
+                .then((result) => {
+                  Alert.alert('Event added successfully');
+                })
+                .catch((error) => {
+                  Alert.alert('Failed to add event');
+                });
             }}
           />
         </View>
