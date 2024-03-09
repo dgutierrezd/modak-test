@@ -1,23 +1,21 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Dimensions, Pressable, Text, View } from "react-native";
-import Animated from "react-native-reanimated";
 import RenderHTML from "react-native-render-html";
 import { IEvent } from "../interfaces/Event";
-import Icon from "react-native-vector-icons/Ionicons";
 import FastImage from "react-native-fast-image";
 import { TouchableOpacity } from "react-native";
 import LottieView from "lottie-react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FAVORITES_STORAGE_ID } from "../utils/constants";
+import { MyContext } from "../../App";
+import { ART_LOGO } from "../utils/constants";
 
 interface EventCardProps {
     event: IEvent,
-    favoriteEvents: any[],
-    setFavoriteEvents: React.Dispatch<React.SetStateAction<any[]>>
 }
 
-const EventCard = ({ event, favoriteEvents, setFavoriteEvents }: EventCardProps) => {
+const EventCard = ({ event }: EventCardProps) => {
+    const contextValue = useContext(MyContext);
+
     const [isFavorite, setIsFavorite] = useState(event.isFavorite);
     const [animation, setAnimation] = useState(null);
 
@@ -32,15 +30,7 @@ const EventCard = ({ event, favoriteEvents, setFavoriteEvents }: EventCardProps)
     }, [isFavorite, animation]);
 
     const toggleStatus = async () => {
-        if (!isFavorite) {
-            const favorites = favoriteEvents?.length ? favoriteEvents : ''
-            await AsyncStorage.setItem(FAVORITES_STORAGE_ID, JSON.stringify([...favorites, event.id]));
-            setFavoriteEvents([...favorites, event.id])
-        } else {
-            const newFavorites = favoriteEvents?.filter(f => f !== event.id);
-            setFavoriteEvents(newFavorites)
-            await AsyncStorage.setItem(FAVORITES_STORAGE_ID, JSON.stringify(newFavorites));
-        }
+        contextValue.onChangeFavorites(event.id, isFavorite);
         setIsFavorite(!isFavorite);
     };
 
@@ -69,11 +59,12 @@ const EventCard = ({ event, favoriteEvents, setFavoriteEvents }: EventCardProps)
                 />
             </TouchableOpacity>
             <FastImage
-                source={{ uri: event.image_url }}
+                source={{ uri: event.image_url || ART_LOGO }}
                 style={{ width: '100%', height: 110, borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
                 resizeMode='cover'
             />
             <View style={{ padding: 5 }}>
+                <Text style={{ fontWeight: '500', fontSize: 16 }}>{event.title}</Text>
                 <View style={{ flexDirection: 'row', marginBottom: 3, flexWrap: 'wrap' }}>
                     {event.program_titles?.map((p: string, index, { length }) => (
                         <Text style={{ fontSize: 12, color: 'gray' }} key={index}>{p} {index + 1 !== length ? '·' : ''} </Text>

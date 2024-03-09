@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityIndicator, Dimensions, ImageBackground, NativeModules, Pressable, ScrollView, Text, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -7,17 +7,21 @@ import { useNavigation } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
 import { TouchableOpacity } from "react-native";
 import RenderHTML from "react-native-render-html";
+import { MyContext } from "../../../App";
+import { ART_LOGO } from "../../utils/constants";
 
 const { CalendarManager } = NativeModules;
 
 const EventDetail = ({ route }: any) => {
     const { event } = route.params;
     const { image_url, title, description, location, date_display, start_date, end_date, start_time, end_time } = event;
+    const contextValue = useContext(MyContext);
 
     const [isFavorite, setIsFavorite] = useState(event?.isFavorite);
     const [animation, setAnimation] = useState(null);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
     const [responseSchedule, setResponseSchedule] = useState('');
+    const [showClose, setShowClose] = useState(true);
 
     const navigation = useNavigation();
 
@@ -28,12 +32,18 @@ const EventDetail = ({ route }: any) => {
     }
 
     useEffect(() => {
+        const savedItem = contextValue.saved?.find(s => s === event.id);
+        if (savedItem) setResponseSchedule('success');
+    }, [contextValue]);
+
+    useEffect(() => {
         if (isFavorite) {
             animation?.play();
         } else animation?.reset();
     }, [isFavorite, animation]);
 
-    const toggleStatus = () => {
+    const toggleStatus = async () => {
+        contextValue.onChangeFavorites(event.id, isFavorite);
         setIsFavorite(!isFavorite);
     };
 
@@ -44,37 +54,47 @@ const EventDetail = ({ route }: any) => {
         }, 3000);
     }
 
+    const splitStartTime = start_time?.split(':');
+    const splitEndTime = end_time?.split(':');
+
+    const startDate = new Date(start_date).setHours(splitStartTime[0], splitStartTime[1]);
+    const endDate = new Date(end_date).setHours(splitEndTime[0], splitEndTime[1]);
+
     const onSchedule = () => {
-        setLoadingSchedule(true);
-        const splitStartTime = start_time?.split(':');
-        const splitEndTime = end_time?.split(':');
+        if (responseSchedule !== 'success') {
+            setLoadingSchedule(true);
 
-        const startDate = new Date(start_date).setHours(splitStartTime[0], splitStartTime[1]);
-        const endDate =  new Date(end_date).setHours(splitEndTime[0], splitEndTime[1]);
-
-        CalendarManager.addEvent(title, startDate, endDate)
-            .then(() => {
-                setLoadingSchedule(false);
-                setResponseSchedule('success');
-                resetSchedule();
-            })
-            .catch(() => {
-                setLoadingSchedule(false);
-                setResponseSchedule('error');
-                resetSchedule();
-            });
+            CalendarManager.addEvent(title, startDate, endDate)
+                .then(() => {
+                    setLoadingSchedule(false);
+                    setResponseSchedule('success');
+                    contextValue.onScheduleEvent(event.id);
+                })
+                .catch(() => {
+                    setLoadingSchedule(false);
+                    setResponseSchedule('error');
+                    resetSchedule();
+                });
+        }
     }
 
+    const onScroll = (e) => {
+        const offsetY = e.nativeEvent.contentOffset.y;
 
+        if (offsetY > 225) setShowClose(false)
+        else setShowClose(true)
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
             <View>
-                <Pressable style={{ padding: 3, position: 'absolute', top: 10, left: 10, zIndex: 10 }} onPress={goBack}>
-                    <Icon name="window-close" color="black" size={26} />
-                </Pressable>
+                {showClose &&
+                    <Pressable style={{ padding: 3, position: 'absolute', top: 10, left: 10, zIndex: 10 }} onPress={goBack}>
+                        <Icon name="window-close" color="black" size={26} />
+                    </Pressable>
+                }
                 <ImageBackground
-                    source={{ uri: image_url }}
+                    source={{ uri: image_url || ART_LOGO }}
                     style={{
                         width: '100%', height: 300,
                         position: "absolute",
@@ -84,20 +104,22 @@ const EventDetail = ({ route }: any) => {
                     }}
                     resizeMode='stretch'
                 />
-                <ScrollView style={{ height: '100%', backgroundColor: 'transparent' }} showsVerticalScrollIndicator={false}>
+                <ScrollView style={{ height: '100%', backgroundColor: 'transparent' }} showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16}>
                     <View style={{ height: '100%', backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: 285, bottom: 0, zIndex: 20, padding: 20, paddingBottom: 70 }}>
                         <Text style={{ fontSize: 20, fontWeight: '600' }}>{title}</Text>
                         <RenderHTML
                             contentWidth={width}
                             source={{ html: description }}
                         />
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                            <MIcon name="place" size={24} color='blue' />
-                            <Text>{location}</Text>
-                        </View>
+                        {location && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                                <MIcon name="place" size={24} color='blue' />
+                                <Text>{location}</Text>
+                            </View>
+                        )}
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Icon name="calendar" size={24} color='blue' />
-                            <Text>{date_display}</Text>
+                            <Text>{date_display || new Date(startDate).toLocaleString("en-US")}</Text>
                         </View>
                         <View style={{ flexDirection: 'row', marginBottom: 3, flexWrap: 'wrap', marginTop: 30 }}>
                             {event.program_titles?.map((p: string, index, { length }) => (

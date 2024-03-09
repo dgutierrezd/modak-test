@@ -1,1 +1,0 @@
-export const FAVORITES_STORAGE_ID = 'modak-favorite-events';
