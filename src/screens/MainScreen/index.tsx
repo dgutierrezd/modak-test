@@ -1,12 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import FastImage from "react-native-fast-image";
 import axios from "axios";
+import Icon from 'react-native-vector-icons/Octicons'
 import EventCard from "../../components/EventCard";
 import { IEvent } from "../../interfaces/Event";
-import { ART_LOGO, FAVORITES_STORAGE_ID } from "../../utils/constants";
+import { ART_LOGO } from "../../utils/constants";
 import { MyContext } from "../../../App";
+import { MainViewStyles } from "./style";
+import { useNavigation } from "@react-navigation/native";
 
 const MainScreen = () => {
     const contextValue = useContext(MyContext);
@@ -16,6 +19,8 @@ const MainScreen = () => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [loadingEvents, setLoadingEvents] = useState<boolean>(false);
+
+    const navigation: any = useNavigation();
 
     useEffect(() => {
         setFavoriteEvents(contextValue.favorites);
@@ -42,24 +47,27 @@ const MainScreen = () => {
             contentSize.height - paddingToBottom;
     };
 
+    const goToFavorites = () => {
+        navigation.navigate("Favorites");
+    }
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#e5e5e5' }}>
-            <View style={{ paddingHorizontal: 20 }}>
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        paddingBottom: 10,
-                    }}
-                >
-                    <Text style={{ fontSize: 24, fontWeight: '600' }}>Events</Text>
-                    <FastImage
-                        style={{ width: 40, height: 40 }}
-                        source={{ uri: ART_LOGO }}
-                    />
+        <SafeAreaView style={MainViewStyles.safeContainer}>
+            <View style={MainViewStyles.containerHorizontal}>
+                <View style={MainViewStyles.header}>
+                    <Text style={MainViewStyles.title}>Events</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Pressable style={{ padding: 3 }} onPress={goToFavorites}>
+                            <Icon name="heart-fill" size={24} color="#575757" />
+                        </Pressable>
+                        <FastImage
+                            style={MainViewStyles.logo}
+                            source={{ uri: ART_LOGO }}
+                        />
+                    </View>
                 </View>
                 <ScrollView
-                    style={{ paddingTop: 10 }}
+                    style={MainViewStyles.scrollContainer}
                     showsVerticalScrollIndicator={false}
                     onScroll={({ nativeEvent }) => {
                         if (isCloseToBottom(nativeEvent) && !loadingEvents && totalPages > currentPage) {

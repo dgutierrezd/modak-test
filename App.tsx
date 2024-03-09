@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAVORITES_STORAGE_ID, SAVED_STORAGE_ID } from './src/utils/constants';
 import MainScreen from './src/screens/MainScreen';
 import EventDetail from './src/screens/EventDetail';
+import FavoritesScreen from './src/screens/FavoritesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,8 +21,8 @@ export const MyContext = createContext({});
 
 function App(): React.JSX.Element {
 
-  const [favorites, setFavorites] = useState([]);
-  const [saved, setSaved] = useState([]);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [saved, setSaved] = useState<any[]>([]);
 
   useEffect(() => {
     AsyncStorage.getItem(FAVORITES_STORAGE_ID).then(res => {
@@ -36,7 +37,6 @@ function App(): React.JSX.Element {
     if (!isFavorite) {
       const tempFavorites = favorites?.length ? favorites : ''
       await AsyncStorage.setItem(FAVORITES_STORAGE_ID, JSON.stringify([...tempFavorites, newFavorite]));
-      // @ts-ignore
       setFavorites([...tempFavorites, newFavorite])
     } else {
       const tempFavorites = favorites?.filter(f => f !== newFavorite);
@@ -48,7 +48,6 @@ function App(): React.JSX.Element {
   const onScheduleEvent = async (newSave: number) => {
     const tempSaved = saved?.length ? saved : ''
     await AsyncStorage.setItem(SAVED_STORAGE_ID, JSON.stringify([...tempSaved, newSave]));
-    // @ts-ignore
     setSaved([...tempSaved, newSave])
   }
 
@@ -58,6 +57,7 @@ function App(): React.JSX.Element {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Main" component={MainScreen} options={{ animation: 'simple_push' }} />
           <Stack.Screen name="EventDetail" component={EventDetail} options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="Favorites" component={FavoritesScreen} options={{ animation: 'fade' }} />
         </Stack.Navigator>
       </MyContext.Provider>
     </NavigationContainer>
