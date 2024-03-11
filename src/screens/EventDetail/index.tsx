@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActivityIndicator, Dimensions, ImageBackground, NativeModules, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Dimensions, ImageBackground, NativeModules, Pressable, ScrollView, Text, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import MIcon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
@@ -83,6 +83,7 @@ const EventDetail = ({ route }: any) => {
                     setLoadingSchedule(false);
                     setResponseSchedule('success');
                     contextValue.onScheduleEvent(event.id);
+                    Alert.alert("Event added successfully");
                 })
                 .catch(() => {
                     setLoadingSchedule(false);
